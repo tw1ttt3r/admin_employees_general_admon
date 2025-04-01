@@ -1,11 +1,30 @@
 import express from "express";
-import { PORT, HOME } from "./config/index.mjs";
+import helmet from "helmet";
+import cors from "cors";
+import { PORT, ROUTES, STATUSHTTP, EXCLUDED_ROUTES, OPTIONS } from "#config/index.mjs";
 
 const app = express();
+app.use(express.json());
+app.use(helmet());
+app.use((req, res, next) => {
+  const noCorsRoutes = [...EXCLUDED_ROUTES.split(',')]; // Rutas excluidas de CORS
 
-app.get(HOME, (req, res) => {
-  res.send("Microservice General Administration online!");
+  if (noCorsRoutes.includes(req.path)) {
+    return next();
+  }
+
+  cors(OPTIONS)(req, res, next);
 });
+
+app.get(ROUTES.HOME, (_, res) => {
+  res.json({ response: "Microservice General Administration online!" }).send();
+});
+
+// /* WILDCARD */
+app.use((_, res) => {
+  res.status(STATUSHTTP.NOTIMPLEMENTED).json({ response: '...' }).send();
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server it's alive!`);
